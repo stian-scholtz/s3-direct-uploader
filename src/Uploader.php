@@ -232,7 +232,7 @@ class Uploader
     {
         $key = $this->getKey();
 
-        return \Storage::disk($this->disk)->temporaryUrl($key, now()->addMinutes($this->signatureValidForMinutes));
+        return Storage::disk($this->disk)->temporaryUrl($key, now()->addMinutes($this->signatureValidForMinutes));
     }
 
     /**
@@ -253,7 +253,7 @@ class Uploader
         if ($this->isImage($fileData['extension'])) {
             if($this->resizer->shouldResize()) {
                 $resizedImagePath = rtrim($fileData['path'], '.'.$fileData['extension']).'.webp';
-                $this->contents = \Storage::disk($this->disk)->get($fileData['path']);
+                $this->contents = Storage::disk($this->disk)->get($fileData['path']);
                 $resizedImage = $this->resizer
                     ->contents($this->contents)
                     ->resize();
@@ -268,7 +268,7 @@ class Uploader
 
             if($this->thumbnail->shouldCreate()) {
                 $thumbnailPath = rtrim($fileData['path'], '.'.$fileData['extension']).'_t.webp';
-                $this->contents = $this->contents ?? \Storage::disk($this->disk)->get($fileData['path']);
+                $this->contents = $this->contents ?? Storage::disk($this->disk)->get($fileData['path']);
                 $thumbnail = $this->thumbnail
                     ->contents($this->contents)
                     ->create();

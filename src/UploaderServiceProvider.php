@@ -3,31 +3,31 @@
 namespace Stianscholtz\S3DirectUploader;
 
 use Illuminate\Support\Facades\Route;
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Illuminate\Support\ServiceProvider;
 
-class UploaderServiceProvider extends PackageServiceProvider
+class UploaderServiceProvider extends ServiceProvider
 {
-    public function configurePackage(Package $package): void
+
+    public function register(): void
     {
-        $package->name('s3-direct-uploader')
-            ->hasConfigFile('s3-direct-uploader')
-            ->hasMigration('create_files_table');
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/s3-direct-uploader.php',
+            's3-direct-uploader'
+        );
+
+        $this->app->bind('s3-direct-uploader', function () {
+            return new Uploader();
+        });
+
+        Route::macro('upload', fn(string $uri, array $action) => Route::match(['get', 'post'], $uri, $action));
     }
 
-    public function packageRegistered(): void
+    public function boot(): void
     {
-        if (!$this->app->resolved('s3-direct-uploader')) {
-            $this->app->singleton('s3-direct-uploader', function () {
-                return new Uploader();
-            });
-        }
-    }
+        $this->publishes([
+            __DIR__.'/../config/s3-direct-uploader.php' => config_path('s3-direct-uploader.php'),
+        ]);
 
-    public function packageBooted(): void
-    {
-        if (!Route::hasMacro('upload')) {
-            Route::macro('upload', fn(string $uri, array $action) => Route::match(['get', 'post'], $uri, $action));
-        }
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 }

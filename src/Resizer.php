@@ -5,7 +5,6 @@ namespace Stianscholtz\S3DirectUploader;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
-use Storage;
 
 class Resizer
 {
