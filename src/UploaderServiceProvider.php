@@ -10,11 +10,6 @@ class UploaderServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $this->mergeConfigFrom(
-            __DIR__.'/../config/s3-direct-uploader.php',
-            's3-direct-uploader'
-        );
-
         $this->app->bind('s3-direct-uploader', function () {
             return new Uploader();
         });
@@ -24,9 +19,11 @@ class UploaderServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->publishes([
-            __DIR__.'/../config/s3-direct-uploader.php' => config_path('s3-direct-uploader.php'),
-        ]);
+        if($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/s3-direct-uploader.php' => config_path('s3-direct-uploader.php'),
+            ], 'config');
+        }
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
