@@ -8,17 +8,19 @@ return new class extends Migration {
     
     public function up(): void
     {
-        Schema::create('files', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('extension', 10);
-            $table->unsignedInteger('size');
-            $table->string('path');
-            $table->string('thumbnail_path')->nullable();
-            $table->string('url');
-            $table->string('thumbnail_url')->nullable();
-            $table->string('mime_type', 20)->nullable();
-            $table->timestamps();
-        });
+        if(!Schema::hasTable('files')){
+            Schema::create('files', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('extension', 10);
+                $table->unsignedInteger('size');
+                $table->string('path');
+                $table->string('thumbnail_path')->nullable();
+                $table->string('url');
+                $table->string('thumbnail_url')->nullable();
+                $table->string('mime_type', 20)->nullable();
+                $table->timestamps();
+            });
+        }
     }
 };
