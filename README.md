@@ -31,6 +31,16 @@ The package will automatically register its service provider and Facade.
 
 After installing the package, you can update the config/s3-direct-uploader.php configuration file with your s3 disk, file model, default thumbnail dimensions, and other settings.
 
+```
+php artisan vendor:publish --provider="Stianscholtz\S3DirectUploader\UploaderServiceProvider" --tag=config
+```
+
+## Database Migration
+S3DirectUploader provides a migration file to create the files table in your database. You do not need to publish this migration, simply run the following and the table will be created if it does not exist:
+
+```
+php artisan migrate
+```
 
 ## Usage
 ### Route Macro
