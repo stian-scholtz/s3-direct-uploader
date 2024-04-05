@@ -37,7 +37,7 @@
         "Stianscholtz\\S3DirectUploader\\UploaderServiceProvider"
       ],
       "aliases": {
-        "FileUploader": "Stianscholtz\\S3DirectUploader\\Facades\\S3DirectUploader"
+        "S3DirectUploader": "Stianscholtz\\S3DirectUploader\\Facades\\S3DirectUploader"
       }
     }
   },
