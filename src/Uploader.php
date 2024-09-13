@@ -16,7 +16,7 @@ class Uploader
     protected string|null $directory;
     protected float|null $maxSize;
     protected bool $unique;
-    protected string $prefix;
+    protected string|null $prefix;
     protected int $signatureValidForMinutes;
     protected ?Closure $after = null;
     protected array|string $mimeTypes = [];
@@ -300,6 +300,9 @@ class Uploader
                     Storage::disk($this->disk)->delete($fileData['path']);
                     $fileData['path'] = $resizedImagePath;
                 }
+
+                $fileData['extension'] = 'webp';
+                $fileData['mime_type'] = 'image/webp';
             }
 
             if ($this->shouldCreateThumbnail()) {
