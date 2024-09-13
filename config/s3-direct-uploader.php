@@ -6,8 +6,9 @@ return [
     | Default Disk
     |--------------------------------------------------------------------------
     |
-    | This option controls the default disk that will be used when a file is uploaded. You may set this to
-    | any of the disks defined in the "disk" array inside the "filesystems.php" config file.
+    | This option controls the default disk that will be used when a file is uploaded.
+    | You may set this to any of the disks defined in the "disks" array inside
+    | the "filesystems.php" config file.
     |
     */
 
@@ -18,18 +19,21 @@ return [
     | Model
     |--------------------------------------------------------------------------
     |
-    | This option controls the model to be used when inserting files into the database.
+    | This option specifies the model to be used when inserting file records
+    | into the database.
     |
     */
 
-    'model' => \App\Models\File::class,
+    'model' => '\App\Models\File',
 
     /*
     |--------------------------------------------------------------------------
     | Default Directory
     |--------------------------------------------------------------------------
     |
-    | This option controls the default directory to which the file will be uploaded.
+    | This option determines the default directory where the uploaded files
+    | will be stored. If set to null, files will be stored in the root of the
+    | specified disk.
     |
     */
 
@@ -40,7 +44,8 @@ return [
     | Default Max Size
     |--------------------------------------------------------------------------
     |
-    | This option controls the default allowed maximum size in MB of the file being uploaded.
+    | This option sets the maximum allowed size for uploaded files, in megabytes (MB).
+    | Files larger than this limit will not be uploaded.
     |
     */
 
@@ -50,21 +55,70 @@ return [
     |--------------------------------------------------------------------------
     | Thumbnail Options
     |--------------------------------------------------------------------------
+    |
+    | These settings control how thumbnails are generated for image files
+    | uploaded to the server. Users can choose between different methods
+    | for creating thumbnails.
+    |
     */
 
     'thumbnail' => [
         /*
         |--------------------------------------------------------------------------
-        | Default Thumbnail Dimensions
+        | Thumbnail Enabled
         |--------------------------------------------------------------------------
         |
-        | These options control the default width and height in pixels of the thumbnail that will be
-        | generated when the file being uploaded is an image.
+        | This option specifies whether a thumbnail should be created during upload.
         |
         */
 
-        'width' => 256,
-        'height' => 256,
+        'enabled' => true,
+
+        /*
+        |--------------------------------------------------------------------------
+        | Thumbnail Generation Method
+        |--------------------------------------------------------------------------
+        |
+        | This option specifies the method used to create the thumbnail.
+        | You can choose between:
+        |
+        | - 'scale': Proportional scaling of the image to a specified size.
+        | - 'resize': Resizing the image to specific width and height dimensions.
+        |
+        */
+
+        'method' => 'scale', // Options: 'scale', 'resize'
+
+        /*
+        |--------------------------------------------------------------------------
+        | Scale Options
+        |--------------------------------------------------------------------------
+        |
+        | These settings apply when the 'scale' method is selected. The image
+        | will be scaled proportionally to the specified size, maintaining
+        | the aspect ratio.
+        |
+        */
+
+        'scale' => [
+            'size' => 300 // The target size (in pixels) for the scaled image's largest dimension (width or height).
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resize Options
+        |--------------------------------------------------------------------------
+        |
+        | These settings apply when the 'resize' method is selected. The image
+        | will be resized to the exact width and height specified here, which
+        | may alter the image's aspect ratio.
+        |
+        */
+
+        'resize' => [
+            'width' => 300,  // The target width (in pixels) for the resized image.
+            'height' => 300, // The target height (in pixels) for the resized image.
+        ]
     ],
 
     /*
@@ -72,8 +126,9 @@ return [
     | Unique File Names
     |--------------------------------------------------------------------------
     |
-    | This option controls whether the uploader should add a unique prefix to guarantee a unique
-    | file name for every uploaded file.
+    | This option controls whether the uploader should generate unique file
+    | names for each uploaded file by adding a unique prefix. This helps
+    | prevent overwriting files with the same name.
     |
     */
 
@@ -84,8 +139,8 @@ return [
     | Prefix
     |--------------------------------------------------------------------------
     |
-    | If this option is not null, then every file that is uploaded will have its name prefixed
-    | with the specified value.
+    | If specified, this value will be prefixed to the file name of every uploaded
+    | file. This can be useful for categorizing or organizing files.
     |
     */
 
@@ -95,6 +150,10 @@ return [
     |--------------------------------------------------------------------------
     | Signature Options
     |--------------------------------------------------------------------------
+    |
+    | These settings control the generation of signed URLs, which are used
+    | to securely upload files.
+    |
     */
 
     'signature' => [
@@ -103,11 +162,11 @@ return [
         | Validity Time
         |--------------------------------------------------------------------------
         |
-        | This option sets the validity time of the generated signature URL in minutes. For example, if
-        | the value is set to 5 then the client will have 5 minutes to upload the file using the
-        | generated URL before it expires.
+        | This option sets the time (in minutes) that a signed URL remains valid.
+        | After this time has passed, the URL will expire, and the file upload
+        | will no longer be allowed.
         |
         */
-        'valid' => 5
+        'valid' => 5 // Validity duration of the signed URL in minutes.
     ]
 ];

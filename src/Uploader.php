@@ -13,10 +13,10 @@ use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 class Uploader
 {
     protected string $disk;
-    protected ?string $directory = '';
-    protected ?float $maxSize;
+    protected string|null $directory;
+    protected float|null $maxSize;
     protected bool $unique;
-    protected ?string $prefix = null;
+    protected string $prefix;
     protected int $signatureValidForMinutes;
     protected ?Closure $after = null;
     protected array|string $mimeTypes = [];
@@ -24,16 +24,28 @@ class Uploader
     protected Resizer $resizer;
     protected ?string $contents = null;
 
+    protected bool $createThumbnail;
+    protected string $thumbnailMethod;
+    protected ?int $thumbnailSize = null;
+    protected ?int $thumbnailWidth = null;
+    protected ?int $thumbnailHeight = null;
+
     public function __construct()
     {
         $this->disk = config('s3-direct-uploader.disk', 's3');
-        $this->directory = config('s3-direct-uploader.directory') ?? null;
+        $this->directory = config('s3-direct-uploader.directory');
         $this->maxSize = config('s3-direct-uploader.maxSize');
-        $this->unique = config('s3-direct-uploader.unique', true);
-        $this->prefix = config('s3-direct-uploader.prefix');
+        $this->unique = (bool)config('s3-direct-uploader.unique', true);
+        $this->prefix = config('s3-direct-uploader.prefix', '');
         $this->signatureValidForMinutes = config('s3-direct-uploader.signature.valid', 5);
         $this->thumbnail = new Thumbnail();
         $this->resizer = new Resizer();
+
+        $this->createThumbnail = config('s3-direct-uploader.thumbnail.enabled', true);
+        $this->thumbnailMethod = config('s3-direct-uploader.thumbnail.method', 'scale');
+        $this->thumbnailSize = config('s3-direct-uploader.thumbnail.scale.size');
+        $this->thumbnailWidth = config('s3-direct-uploader.thumbnail.resize.width');
+        $this->thumbnailHeight = config('s3-direct-uploader.thumbnail.resize.height');
     }
 
     public function disk(string $disk): static
@@ -78,19 +90,43 @@ class Uploader
         return $this;
     }
 
-    public function thumbnail(bool|int $width, int $height = null): static
+    public function thumbnail(bool $create): static
     {
-        if (is_bool($width) && !$width) {
-            $this->thumbnail
-                ->width(null)
-                ->height(null);
-        } elseif(is_int($width)) {
-            $this->thumbnail
-                ->width($width)
-                ->height($height);
-        }
+        $this->createThumbnail = $create;
+        return $this;
+    }
+
+    public function thumbnailMethod(string $method): static
+    {
+        $this->thumbnail->method($method);
 
         return $this;
+    }
+
+    public function thumbnailSize(int $size): static
+    {
+        $this->thumbnail->size($size);
+
+        return $this;
+    }
+
+    public function thumbnailWidth(int $width): static
+    {
+        $this->thumbnail->width($width);
+
+        return $this;
+    }
+
+    public function thumbnailHeight(int $height): static
+    {
+        $this->thumbnail->height($height);
+
+        return $this;
+    }
+
+    public function shouldCreateThumbnail(): bool
+    {
+        return $this->createThumbnail && ($this->thumbnailSize > 0 || $this->thumbnailWidth > 0 || $this->thumbnailHeight > 0);
     }
 
     public function resize(int $width, int $height): static
@@ -166,9 +202,9 @@ class Uploader
 
     private function getFileName(): string
     {
-        $uniqueId = ($this->unique ? (uniqid().'_') : '');
+        $uniqueId = ($this->unique ? (uniqid() . '_') : '');
 
-        return $this->prefix.$uniqueId.request('name');
+        return $this->prefix . $uniqueId . request('name');
     }
 
     private function getS3Client(): S3Client
@@ -185,7 +221,7 @@ class Uploader
 
     private function getBucket(): mixed
     {
-        return config('filesystems.disks.'.$this->disk.'.bucket');
+        return config('filesystems.disks.' . $this->disk . '.bucket');
     }
 
     private function getOptions(string $bucket): array
@@ -198,7 +234,7 @@ class Uploader
 
         if ($this->maxSize > 0) {
             $options[] = [
-                "content-length-range", 0, $this->maxSize * 1024 * 1024
+                "content-length-range", 0, ceil($this->maxSize * 1024 * 1024)
             ];
         }
 
@@ -207,7 +243,7 @@ class Uploader
 
     private function getPostObject(S3Client $s3Client, string $bucket, array $options): PostObjectV4
     {
-        $expires = '+'.$this->signatureValidForMinutes.' minute';
+        $expires = '+' . $this->signatureValidForMinutes . ' minute';
         $formInputs = [
             'Content-Type' => request('mimeType')
         ];
@@ -225,7 +261,7 @@ class Uploader
     {
         $fileName = $this->getFileName();
 
-        return ltrim($this->directory.(str_ends_with($this->directory, '/') ? '' : '/').$fileName, '/');
+        return ltrim($this->directory . (str_ends_with($this->directory, '/') ? '' : '/') . $fileName, '/');
     }
 
     private function getTemporaryURL(): string
@@ -251,8 +287,8 @@ class Uploader
         ];
 
         if ($this->isImage($fileData['extension'])) {
-            if($this->resizer->shouldResize()) {
-                $resizedImagePath = rtrim($fileData['path'], '.'.$fileData['extension']).'.webp';
+            if ($this->resizer->shouldResize()) {
+                $resizedImagePath = rtrim($fileData['path'], '.' . $fileData['extension']) . '.webp';
                 $this->contents = Storage::disk($this->disk)->get($fileData['path']);
                 $resizedImage = $this->resizer
                     ->contents($this->contents)
@@ -266,11 +302,15 @@ class Uploader
                 }
             }
 
-            if($this->thumbnail->shouldCreate()) {
-                $thumbnailPath = rtrim($fileData['path'], '.'.$fileData['extension']).'_t.webp';
+            if ($this->shouldCreateThumbnail()) {
+                $thumbnailPath = rtrim($fileData['path'], '.' . $fileData['extension']) . '_t.webp';
                 $this->contents = $this->contents ?? Storage::disk($this->disk)->get($fileData['path']);
                 $thumbnail = $this->thumbnail
                     ->contents($this->contents)
+                    ->method($this->thumbnailMethod)
+                    ->size($this->thumbnailSize)
+                    ->width($this->thumbnailWidth)
+                    ->height($this->thumbnailHeight)
                     ->create();
 
                 Storage::disk($this->disk)->put($thumbnailPath, $thumbnail->toWebp());
@@ -312,7 +352,7 @@ class Uploader
     private function getMimeTypeRules(): string
     {
         $rules = 'required';
-        return count($this->mimeTypes) > 0 ? $rules.'|in:'.implode(',', $this->mimeTypes) : $rules;
+        return count($this->mimeTypes) > 0 ? $rules . '|in:' . implode(',', $this->mimeTypes) : $rules;
     }
 
     private function callAfter(Model $file): void

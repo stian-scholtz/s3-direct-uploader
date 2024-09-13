@@ -8,16 +8,10 @@ use Intervention\Image\Interfaces\ImageInterface;
 
 class Resizer
 {
-    protected string $disk;
     protected ?int $width = null;
     protected ?int $height = null;
     protected ?int $size = null;
     protected string $contents;
-
-    public function __construct()
-    {
-        $this->disk = config('s3-direct-uploader..disk', 's3');
-    }
 
     public function contents(string $contents): static
     {
@@ -53,7 +47,7 @@ class Resizer
         $image = $manager->read($this->contents);
 
         if ($this->size > 0) {
-            return $this->scale($image);
+            return $this->scaleDown($image);
         } elseif ($this->width > 0 || $this->height > 0) {
             return $this->resizeDown($image);
         }
@@ -66,15 +60,15 @@ class Resizer
         return $this->size > 0 || $this->width > 0 || $this->height > 0;
     }
 
-    private function scale(ImageInterface $image): ImageInterface
+    private function scaleDown(ImageInterface $image): ImageInterface
     {
         $width = $image->width();
         $height = $image->height();
 
         if ($width >= $height && $width > $this->size) {
-            $image->scale(width: $this->size);
+            $image->scaleDown(width: $this->size);
         } elseif ($height > $width && $height > $this->size) {
-            $image->scale(height: $this->size);
+            $image->scaleDown(height: $this->size);
         }
 
         return $image;
