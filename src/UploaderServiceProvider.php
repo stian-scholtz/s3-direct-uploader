@@ -25,7 +25,6 @@ class UploaderServiceProvider extends ServiceProvider
             ], 'config');
         }
 
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->publishes([
             __DIR__.'/../database/migrations' => database_path('migrations'),
         ], 'migrations');
