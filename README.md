@@ -36,7 +36,19 @@ php artisan vendor:publish --provider="Stianscholtz\S3DirectUploader\UploaderSer
 ```
 
 ## Database Migration
-S3DirectUploader provides a migration file to create the files table in your database. You do not need to publish this migration, simply run the following and the table will be created if it does not exist:
+S3DirectUploader provides a migration file to create the files table in your database. To publish this migration, run:
+
+```
+php artisan vendor:publish
+```
+
+When prompted to select the service provider, choose:
+
+```
+Stianscholtz\S3DirectUploader\UploaderServiceProvider
+```
+
+Then, run the migration:
 
 ```
 php artisan migrate
